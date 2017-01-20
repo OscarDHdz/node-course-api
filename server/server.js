@@ -21,15 +21,13 @@ app.post('/todos', (req, res) => {
 
   logger.log(req);
 
-  console.log('REQ_BODY:', req.body);
 
   var todo = new Todo({
       text: req.body.text
   });
 
-  console.log(req.body);
-  console.log('---');
-  console.log(todo);
+  console.log('POST: todo');
+  console.log(JSON.stringify(todo, undefined, 2));
 
   // todo.save().then(
   //   (doc) => {
@@ -49,6 +47,15 @@ app.post('/todos', (req, res) => {
 
 });
 
+app.get('/todos', (req, res) => {
+  Todo.find().then((todos) => {
+    res.send({
+      todos
+    });
+  }).catch((e) => {
+    res.status(400).send(e);
+  })
+});
 
 
 app.listen(3000, () => {
