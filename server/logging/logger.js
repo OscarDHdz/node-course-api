@@ -9,7 +9,7 @@ var log = ( req ) => {
 
   fs.appendFile( logPath + logName, log + '\n', (err) => {
     if ( err ) {
-      console.log('Unable to append to server.log');
+      console.log('Unable to append to server.log', err);
     }
   });
 };

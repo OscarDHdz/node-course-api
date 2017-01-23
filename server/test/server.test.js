@@ -6,6 +6,11 @@ const {ObjectID} = require('mongodb');
 const {app}  = require('./../server');
 const {Todo} = require('../models/todo');
 
+// My Modules
+const logger = require('../logging/logger');
+logger.setPath('./server/logging/');
+
+
 const todosConst = [{
   _id: new ObjectID(),
   text: 'First test todo'
@@ -90,7 +95,6 @@ describe('GET /todos/:id', () => {
     .get(`/todos/${todosConst[0]._id.toHexString()}`)
     .expect(200)
     .expect((res) => {
-      console.log(res.body);
       expect(res.body.todo.text).toBe(todosConst[0].text);
     })
     .end(done);
@@ -125,12 +129,46 @@ describe('DELETE /todos/:id', () => {
       .end(done);
   });
 
-
   it('Should return 404 if object ID is invalid', (done) => {
     request(app)
       .delete(`/todos/123`)
       .expect(404)
       .end(done);
   })
+
+});
+
+describe('PATCH /todos/:id', () => {
+
+  it('Should update a Todo', (done) => {
+
+    var hexId = todosConst[1]._id.toHexString();
+
+    request(app)
+      .patch(`/todos/${hexId}`)
+      .send({
+        completed: true
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todo._id).toBe(hexId);
+        expect(res.body.todo.completed).toBe(true);
+      })
+      .end(done);
+
+    });
+
+  it('Should return 404 at Random ID', (done) => {
+
+     request(app)
+      .patch(`/todos/${new ObjectID()}`)
+      .send({
+        completed: true
+      })
+      .expect(404)
+      .end(done);
+
+  });
+
 
 });
