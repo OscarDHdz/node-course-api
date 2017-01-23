@@ -22,6 +22,7 @@ const port = process.env.PORT;
 // Inject  Middleware to Express
 app.use(bodyParser.json());
 
+// TOdos -----------------------------------------------------------------------
 app.post('/todos', (req, res) => {
 
   logger.log(req);
@@ -135,9 +136,32 @@ app.patch('/todos/:id', (req, res) => {
 
 });
 
+// Users -----------------------------------------------------------------------
+app.post('/users', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password']);
+  var user = new User(body);
 
-app.listen(3000, () => {
-  console.log('Started on port 3000');
+  // jwt
+
+
+  user.save()
+  .then(() => {
+    return user.generateAuthToken();
+  })
+  .then((token) => {
+    res.header('x-auth', token).send(user);
+  })
+  .catch((e) => {
+    res.status(400).send(e);
+  });
+
+
+});
+
+
+console.log(process.env.PORT);
+app.listen(process.env.PORT, () => {
+  console.log(`Started on port ${process.env.PORT}`);
 });
 
 
