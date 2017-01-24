@@ -146,7 +146,7 @@ app.post('/users', (req, res) => {
 
   // jwt
 
-  
+
   user.save()
   .then(() => {
     return user.generateAuthToken();
@@ -158,6 +158,30 @@ app.post('/users', (req, res) => {
     res.status(400).send(e);
   });
 
+
+});
+
+app.post('/users/login', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password']);
+
+
+  // User.findByCredentials( body.email, body.password )
+  // .then((user) => {
+  //   res.send(user);
+  // })
+  // .catch((e) => {
+  //   res.status(404).send(e);
+  // })
+
+  User.findByCredentials( body.email, body.password  )
+  .then((user) => {
+    return user.generateAuthToken().then((token) => {
+      res.header('x-auth', token).send(user);
+    })
+  })
+  .catch((e) => {
+    res.status(400).send();
+  });
 
 });
 
