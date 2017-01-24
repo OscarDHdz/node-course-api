@@ -56,6 +56,7 @@ UserSchema.methods.generateAuthToken = function () {
 
   return user.save()
   .then(() => {
+
     return token;
   })
   .catch((e) => {
@@ -95,7 +96,7 @@ UserSchema.pre('save', function (next) {
         next();
       });
     });
-    
+
   } else {
     next();
   }

@@ -10,15 +10,15 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db ) => {
   }
   console.log('Connected to MongoDB server');
 
-  // db.collection('Todos').insertOne({
-  //   text: 'walk the dog',
-  //   completed: true
-  // }, (err, result) => {
-  //   if ( err ) {
-  //     return console.log('Unable to insert to Collection', err);
-  //   }
-  //   console.log('Document inserted to Collection', JSON.stringify(result.ops, undefined, 2));
-  // });
+  db.collection('Todos').insertOne({
+    text: 'walk the dog',
+    completed: true
+  }, (err, result) => {
+    if ( err ) {
+      return console.log('Unable to insert to Collection', err);
+    }
+    console.log('Document inserted to Collection', JSON.stringify(result.ops, undefined, 2));
+  });
 
 
   // db.collection('Users').insertOne({

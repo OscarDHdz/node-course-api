@@ -146,7 +146,7 @@ app.post('/users', (req, res) => {
 
   // jwt
 
-
+  
   user.save()
   .then(() => {
     return user.generateAuthToken();

@@ -5,26 +5,17 @@ const {ObjectID} = require('mongodb');
 
 const {app}  = require('./../server');
 const {Todo} = require('../models/todo');
+const {User} = require('../models/user');
+
 
 // My Modules
 const logger = require('../logging/logger');
 logger.setPath('./server/logging/');
 
-
-const todosConst = [{
-  _id: new ObjectID(),
-  text: 'First test todo'
-  }, {
-  _id: new ObjectID(),
-  text: 'Second test todo'
-}]
-
-// Run before each test case
-beforeEach((done) => {
-  Todo.remove({}).then(() => {
-    return Todo.insertMany(todosConst);
-  }).then(() => done());
-})
+// Seed require
+const {todosConst, populateTodos, usersConst, populateUsers} = require('./seed/seed');
+beforeEach(populateTodos);
+beforeEach(populateUsers);
 
 describe('POST /todos', () => {
 
@@ -172,3 +163,88 @@ describe('PATCH /todos/:id', () => {
 
 
 });
+
+describe('POST /users', () => {
+
+  it('Should create a user that exists', (done) => {
+    var email = 'test1@test.com';
+    var password = 'qwe234qwe';
+    request(app)
+      .post('/users')
+      .send({
+        email,
+        password
+      })
+      .expect(200)
+      .expect((res) => {
+        expect(res.headers['x-auth']).toExist();
+        expect(res.body._id).toExist();
+        expect(res.body.email).toExist();
+      })
+      .end((err) => {
+        if ( err ) {
+          return done(err);
+        }
+
+        User.findOne({email}).then((user) =>{
+          expect(user).toExist();
+          expect(user.password).toNotBe(password);
+          done();
+        })
+      });
+  });
+
+  it('Should validate error if request invalid {minlength}', (done) => {
+    var email = 'test1@test.com';
+    var password = '123';
+    request(app)
+      .post('/users')
+      .send({email, password})
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.errors.password.kind).toBe('minlength');
+      })
+      .end(done);
+  });
+
+  it('Should not create user if email in use', (done) => {
+    var email = usersConst[0].email;
+    var password = '1254683';
+
+    request(app)
+      .post('/users')
+      .send({email, password})
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.errmsg).toInclude('duplicate');
+      })
+      .end(done);
+  });
+
+});
+
+describe('GET /users/me', () => {
+
+  it('Should return user if authenticated', (done) => {
+    request(app)
+      .get('/users/me')
+      .set('x-auth', usersConst[0].tokens[0].token)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body._id).toBe(usersConst[0]._id.toHexString());
+        expect(res.body.email).toBe(usersConst[0].email);
+      })
+      .end(done);
+  });
+
+  it('Should return 401 if not authenticated', (done) => {
+    request(app)
+      .get('/users/me')
+      .expect(401)
+      .expect((res) => {
+        expect(res.body).toEqual({});
+      })
+      .end(done)
+  });
+
+})
