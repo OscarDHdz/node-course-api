@@ -180,7 +180,7 @@ app.post('/users/login', (req, res) => {
     })
   })
   .catch((e) => {
-    res.status(400).send();
+    res.status( e.status || 400).send();
   });
 
 });

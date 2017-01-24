@@ -1,5 +1,6 @@
 const expect    = require('expect'   );
 const request = require('supertest');
+const _ = require('lodash');
 
 const {ObjectID} = require('mongodb');
 
@@ -248,3 +249,48 @@ describe('GET /users/me', () => {
   });
 
 })
+
+describe('POST /users/login', () => {
+
+  it('Should login user and return auth toekn', (done) => {
+    var body = _.pick(usersConst[0], ['email', 'password']);
+    request(app)
+      .post('/users/login')
+      .send( body )
+      .expect(200)
+      .expect((res) => {
+        expect(res.header['x-auth']).toExist();
+        expect(res.body.email).toBe(body.email);
+      })
+      .end( (err, res) => {
+
+        if( err ) {
+          return done(err);
+        }
+
+        User.findById(usersConst[0]._id).then((user) => {
+
+          expect(user.tokens[1].token).toEqual(res.headers['x-auth']);
+
+          done();
+        }).catch((e) => done());
+
+      });
+  });
+
+  it('Should reject invalid login', (done) => {
+
+    var body = _.pick(usersConst[0], ['email']);
+    body.password = 'NotOriginalPaswword';
+    request(app)
+      .post('/users/login')
+      .send(body)
+      .expect(401)
+      .expect((res) => {
+        expect(res.body).toEqual({});
+      })
+      .end(done);
+
+  });
+
+});
