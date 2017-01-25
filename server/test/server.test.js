@@ -182,7 +182,7 @@ describe('POST /users', () => {
         expect(res.body._id).toExist();
         expect(res.body.email).toExist();
       })
-      .end((err) => {
+      .end((err, res) => {
         if ( err ) {
           return done(err);
         }
@@ -191,7 +191,7 @@ describe('POST /users', () => {
           expect(user).toExist();
           expect(user.password).toNotBe(password);
           done();
-        })
+        }).catch((e) => done(e));
       });
   });
 
@@ -294,3 +294,27 @@ describe('POST /users/login', () => {
   });
 
 });
+
+describe('DELETE /users/me/token', () => {
+
+  it('Should remove auth token on logout', (done) => {
+    request(app)
+      .delete('/users/me/token')
+      .set('x-auth', usersConst[0].tokens[0].token)
+      .expect(200)
+      .end( (err, res) => {
+        if ( err ) {
+          return done(err);
+        }
+
+        User.findById(usersConst[0]._id).then((user) => {
+          expect(user.tokens.length).toEqual(0);
+          done();
+        }).catch((e) => {
+          return done(e);
+        });
+      });
+
+  });
+
+})
