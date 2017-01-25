@@ -8,7 +8,7 @@ var bodyParser = require('body-parser');
 
 // My Modules
 const logger = require('./logging/logger');
-logger.setPath('./logging/');
+logger.setPath('./server/logging/');
 
 // DB
 var {mongoose} = require('./db/mongoose');
@@ -26,13 +26,14 @@ const port = process.env.PORT;
 app.use(bodyParser.json());
 
 // TOdos -----------------------------------------------------------------------
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate, (req, res) => {
 
   logger.log(req);
 
 
   var todo = new Todo({
-      text: req.body.text
+      text: req.body.text,
+      _creator: req.user._id
   });
 
   // todo.save().then(
@@ -53,9 +54,11 @@ app.post('/todos', (req, res) => {
 
 });
 
-app.get('/todos', (req, res) => {
+app.get('/todos', authenticate, (req, res) => {
   logger.log(req);
-  Todo.find().then((todos) => {
+  Todo.find({
+    _creator: req.user._id
+  }).then((todos) => {
     res.send({
       todos
     });
@@ -64,7 +67,7 @@ app.get('/todos', (req, res) => {
   })
 });
 
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
     logger.log(req);
     var id = req.params.id;
 
@@ -73,24 +76,30 @@ app.get('/todos/:id', (req, res) => {
         error: 'INVALID_ID',
       });
     }
-    Todo.findById(id).then((todo) => {
+    Todo.findOne({
+      _id: id,
+      _creator: req.user._id
+    }).then((todo) => {
       if ( todo ) {
         return res.status(200).send({todo})
       }
-      res.status(404).send(todo);
+      res.status(404).send();
     }).catch((e) => {
       res.status(400).send();
     })
 })
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
   logger.log(req);
   var id = req.params.id;
 
   if ( !ObjectID.isValid(id) ) {
     return res.status(404).send();
   }
-  Todo.findByIdAndRemove(id).then((todo) => {
+  Todo.findOneAndRemove({
+    _id: id,
+    _creator: req.user._id
+  }).then((todo) => {
 
     if ( !todo ) {
       return res.status(404).send();
@@ -105,7 +114,7 @@ app.delete('/todos/:id', (req, res) => {
 
 });
 
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
   logger.log(req);
   var id = req.params.id;
 
@@ -119,7 +128,10 @@ app.patch('/todos/:id', (req, res) => {
 
   if ( _.isBoolean(body.completed) && body.completed) {
     body.completedAt = new Date().getTime();
-    Todo.findByIdAndUpdate(id, {
+    Todo.findOneAndUpdate({
+      _id: id,
+      _creator: req.user._id
+    }, {
       $set: body
     }, {
       new: true
